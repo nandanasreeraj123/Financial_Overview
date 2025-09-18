@@ -1,77 +1,13 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.ensemble import IsolationForest
 from sklearn.cluster import KMeans
-from sklearn.linear_model import LinearRegression
 import numpy as np
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-
-# =============================
-# Utility Functions
-# =============================
-
-def load_data(file):
-    """
-    Load CSV file and preprocess basic columns.
-    """
-    df = pd.read_csv(file, parse_dates=["Date"])
-    df["Month"] = df["Date"].dt.to_period("M")
-    return df
-
-def preprocess_data(df):
-    """
-    Preprocess manually entered DataFrame.
-    """
-    df["Date"] = pd.to_datetime(df["Date"])
-    df["Month"] = df["Date"].dt.to_period("M")
-    return df
-
-def compute_kpis(df):
-    if df.empty:
-        return 0, 0, 0, 0
-
-    df["Month"] = df["Date"].dt.to_period("M")
-
-    # Income is total salary
-    months_count = df["Month"].nunique()
-    total_income = df[df["Category"] == "Salary"]["Amount"].sum()
-
-    # Expenses: sum of negative amounts only
-    total_expense = df[df["Amount"] < 0]["Amount"].abs().sum() / months_count if months_count > 0 else 0
-
-    
-    income = total_income / months_count if months_count > 0 else 0
-
-    savings = income - total_expense
-    savings_rate = (savings / income * 100) if total_income > 0 else 0
-
-    return income, total_expense, savings, savings_rate
-
-
-def months_sorted(series):
-    """Sort months chronologically and return as comma-separated abbreviations."""
-    return ", ".join(series.sort_values().dt.strftime("%b"))
-
-def describe_cluster(avg, q1, q2):
-    """Return cluster description based on average spending."""
-    if avg < q1:
-        return "Low spending month"
-    elif avg < q2:
-        return "Medium spending month"
-    else:
-        return "High spending month"
-
-def color_dot(cluster, cluster_colors):
-    """Return HTML for colored dot matching cluster color."""
-    color = cluster_colors.get(cluster, "gray")
-    return f"<span style='color:{color}; font-size:20px;'>&#9679;</span>"
-
-
-# =============================
-# Visualization Functions
-# =============================
+from utils import months_sorted, color_dot, describe_cluster
 
 def plot_category_spending(df):
     """
@@ -277,94 +213,3 @@ def spending_clusters(df):
     st.markdown(cluster_summary.to_html(escape=False, index=False), unsafe_allow_html=True)
 
     return monthly
-
-
-# =============================
-# Streamlit App
-# =============================
-
-def main():
-    st.set_page_config(page_title="💰 Finance Intelligence Dashboard", layout="wide")
-
-    # Custom CSS
-    st.markdown("""
-        <style>
-        .main { background-color: #f4f6f9; }
-        .metric-card {
-            padding: 15px; border-radius: 15px; background: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center;
-        }
-        .metric-value { font-size: 26px; font-weight: bold; color: #1E88E5; }
-        .metric-label { font-size: 14px; color: gray; }
-        </style>
-    """, unsafe_allow_html=True)
-
-    st.sidebar.title("⚙️ Filters")
-    st.sidebar.info("Use filters to customize your analysis")
-
-    # Input Selection
-    input_method = st.sidebar.radio("Data Source:", ["📂 Upload CSV", "✍️ Enter Manually"])
-
-    df = None
-    if input_method == "📂 Upload CSV":
-        file = st.sidebar.file_uploader("Upload transactions CSV", type=["csv"])
-        if file:
-            df = load_data(file)
-    else:
-        st.sidebar.write("Manual entry mode")
-        df = st.data_editor(pd.DataFrame(columns=["Date","Description","Category","Amount"]), num_rows="dynamic")
-        if not df.empty:
-            df = preprocess_data(df)
-
-    if df is not None and not df.empty:
-        # Sidebar Filters
-        categories = st.sidebar.multiselect(
-            "Filter by Category", df["Category"].unique(), default=df["Category"].unique()
-        )
-        df = df[df["Category"].isin(categories)]
-
-        # Tabs
-        dashboard_tab, anomaly_tab, forecast_tab, insights_tab, rawdata_tab = st.tabs(
-            ["📊 Dashboard", "🚨 Anomalies", "📈 Forecast", "🤖 Insights", "📂 Raw Data"]
-        )
-
-        with dashboard_tab:
-            st.subheader("📊 Financial Overview")
-            income, expenses, savings, savings_rate = compute_kpis(df)
-            
-            col1, col2, col3, col4 = st.columns(4)
-            col1.markdown(f"<div class='metric-card'><div class='metric-value'>€{income:,.2f}</div><div class='metric-label'>Avg Monthly Income</div></div>", unsafe_allow_html=True)
-            col2.markdown(f"<div class='metric-card'><div class='metric-value'>€{expenses:,.2f}</div><div class='metric-label'>Expenses</div></div>", unsafe_allow_html=True)
-            col3.markdown(f"<div class='metric-card'><div class='metric-value'>€{savings:,.2f}</div><div class='metric-label'>Savings</div></div>", unsafe_allow_html=True)
-            col4.markdown(f"<div class='metric-card'><div class='metric-value'>{savings_rate:.1f}%</div><div class='metric-label'>Savings Rate</div></div>", unsafe_allow_html=True)
-
-            st.markdown("---")
-            col1, col2 = st.columns(2)
-            with col1:
-                plot_category_spending(df)
-            with col2:
-                plot_monthly_trends(df)
-
-        with anomaly_tab:
-            st.subheader("🚨 Anomaly Detection")
-            show_anomalies(df)
-
-        with forecast_tab:
-            st.subheader("📈 Forecasting (Monthly Expenses)")
-            forecast_expenses(df)
-
-        with insights_tab:
-            st.subheader("🤖 Spending Behavior Insights")
-            spending_clusters(df)
-
-        with rawdata_tab:
-            st.subheader("📂 Raw Transactions")
-            st.dataframe(df)
-            st.download_button("💾 Download Processed CSV", df.to_csv(index=False), "processed_transactions.csv")
-
-    else:
-        st.warning("👆 Upload a CSV or enter your transactions to begin.")
-
-
-if __name__ == "__main__":
-    main()
