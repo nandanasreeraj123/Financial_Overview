@@ -6,6 +6,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.cluster import KMeans
 from sklearn.linear_model import LinearRegression
 import numpy as np
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 # =============================
 # Utility Functions
@@ -48,6 +49,26 @@ def compute_kpis(df):
 
     return income, total_expense, savings, savings_rate
 
+
+def months_sorted(series):
+    """Sort months chronologically and return as comma-separated abbreviations."""
+    return ", ".join(series.sort_values().dt.strftime("%b"))
+
+def describe_cluster(avg, q1, q2):
+    """Return cluster description based on average spending."""
+    if avg < q1:
+        return "Low spending month"
+    elif avg < q2:
+        return "Medium spending month"
+    else:
+        return "High spending month"
+
+def color_dot(cluster, cluster_colors):
+    """Return HTML for colored dot matching cluster color."""
+    color = cluster_colors.get(cluster, "gray")
+    return f"<span style='color:{color}; font-size:20px;'>&#9679;</span>"
+
+
 # =============================
 # Visualization Functions
 # =============================
@@ -83,16 +104,35 @@ def plot_category_spending(df):
 
 def plot_monthly_trends(df):
     """
-    Plot line chart of monthly spending trends.
+    Plot line chart of monthly spending trends (expenses only, positive values).
     """
     if df.empty:
         st.warning("No data to plot monthly trends.")
         return
-    monthly = df.groupby(df["Month"])["Amount"].sum().reset_index()
+
+    # Keep only expenses and convert to positive
+    expenses = df[df["Amount"] < 0].copy()
+    expenses["Amount"] = expenses["Amount"].abs()
+
+    # Aggregate monthly
+    monthly = expenses.groupby(expenses["Month"])["Amount"].sum().reset_index()
     monthly["Month"] = monthly["Month"].astype(str)
-    fig = px.line(monthly, x="Month", y="Amount", markers=True,
-                  title="Monthly Spending Trend")
+
+    if monthly.empty:
+        st.warning("No expense data to plot monthly trends.")
+        return
+
+    fig = px.line(
+        monthly,
+        x="Month",
+        y="Amount",
+        markers=True,
+        title="Monthly Spending Trend (Expenses Only)",
+        line_shape="spline",
+        color_discrete_sequence=["#FF5733"]  
+    )
     st.plotly_chart(fig, use_container_width=True)
+
 
 def show_anomalies(df):
     """
@@ -113,7 +153,6 @@ def show_anomalies(df):
     st.dataframe(anomalies)
     return anomalies
 
-from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 def forecast_expenses(df, forecast_months=6):
     """
@@ -178,32 +217,35 @@ def forecast_expenses(df, forecast_months=6):
 
 def spending_clusters(df):
     """
-    Cluster monthly spending using KMeans and visualize clusters with custom RGB colors.
+    Cluster monthly expenses using KMeans, visualize, and explain clusters.
     """
     if df.empty:
         st.warning("No data to perform clustering.")
         return pd.DataFrame()
     
-    monthly = df.groupby(df["Month"])["Amount"].sum().reset_index()
+    # Use only expenses (positive)
+    monthly_expenses = df[df["Amount"] < 0].copy()
+    monthly_expenses["Amount"] = monthly_expenses["Amount"].abs()
+
+    # Aggregate by month
+    monthly = monthly_expenses.groupby(monthly_expenses["Month"])["Amount"].sum().reset_index()
     monthly["Month"] = monthly["Month"].astype(str)
+    monthly["Month_dt"] = pd.to_datetime(monthly["Month"].astype(str) + "-01")
 
     n_samples = len(monthly)
-    n_clusters = min(3, n_samples)  # max 3 clusters
+    n_clusters = min(3, n_samples)
     if n_clusters < 1:
         st.warning("Not enough data to perform clustering.")
         return monthly
 
-    # Run KMeans
+    # KMeans clustering
     kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(monthly[["Amount"]])
-    monthly["Cluster"] = kmeans.labels_.astype(str)   # convert to string!
+    monthly["Cluster"] = kmeans.labels_.astype(str)
 
-    # Assign custom RGB colors (string keys)
-    cluster_colors = {
-        "0": "rgb(220, 20, 60)",   # crimson red
-        "1": "rgb(34, 139, 34)",   # forest green
-        "2": "rgb(30, 144, 255)"   # dodger blue
-    }
+    # Custom RGB colors
+    cluster_colors = {"0": "rgb(220, 20, 60)", "1": "rgb(34, 139, 34)", "2": "rgb(30, 144, 255)"}
 
+    # Scatter plot
     fig = px.scatter(
         monthly,
         x="Month",
@@ -213,8 +255,28 @@ def spending_clusters(df):
         color_discrete_map=cluster_colors
     )
     st.plotly_chart(fig, use_container_width=True)
-    return monthly
 
+    # Cluster explanations with months
+    cluster_summary = monthly.groupby("Cluster").agg({
+        "Amount": "mean",
+        "Month_dt": months_sorted
+    }).reset_index()
+
+    q1 = cluster_summary["Amount"].quantile(0.33)
+    q2 = cluster_summary["Amount"].quantile(0.66)
+
+    # Apply cluster description and color dot
+    cluster_summary["Description"] = cluster_summary["Amount"].apply(lambda x: describe_cluster(x, q1, q2))
+    cluster_summary["Color"] = cluster_summary["Cluster"].apply(lambda x: color_dot(x, cluster_colors))
+
+    cluster_summary = cluster_summary[["Cluster", "Description", "Amount", "Month_dt", "Color"]]
+    cluster_summary.rename(columns={"Month_dt": "Months"}, inplace=True)
+
+    st.subheader("Cluster Explanations (Jan → Dec)")
+    st.write("Color column shows the cluster dot color in the scatter plot:")
+    st.markdown(cluster_summary.to_html(escape=False, index=False), unsafe_allow_html=True)
+
+    return monthly
 
 
 # =============================
@@ -250,17 +312,16 @@ def main():
             df = load_data(file)
     else:
         st.sidebar.write("Manual entry mode")
-        # Empty editor
         df = st.data_editor(pd.DataFrame(columns=["Date","Description","Category","Amount"]), num_rows="dynamic")
         if not df.empty:
             df = preprocess_data(df)
 
     if df is not None and not df.empty:
         # Sidebar Filters
-        categories = st.sidebar.multiselect("Filter by Category", df["Category"].unique(), default=df["Category"].unique())
+        categories = st.sidebar.multiselect(
+            "Filter by Category", df["Category"].unique(), default=df["Category"].unique()
+        )
         df = df[df["Category"].isin(categories)]
-        date_range = st.sidebar.date_input("Date Range", [df["Date"].min(), df["Date"].max()])
-        df = df[(df["Date"] >= pd.to_datetime(date_range[0])) & (df["Date"] <= pd.to_datetime(date_range[1]))]
 
         # Tabs
         dashboard_tab, anomaly_tab, forecast_tab, insights_tab, rawdata_tab = st.tabs(
@@ -269,7 +330,6 @@ def main():
 
         with dashboard_tab:
             st.subheader("📊 Financial Overview")
-            # Use corrected KPI computation
             income, expenses, savings, savings_rate = compute_kpis(df)
             
             col1, col2, col3, col4 = st.columns(4)
@@ -290,7 +350,7 @@ def main():
             show_anomalies(df)
 
         with forecast_tab:
-            st.subheader("📈 Forecasting (Trend + Moving Average)")
+            st.subheader("📈 Forecasting (Monthly Expenses)")
             forecast_expenses(df)
 
         with insights_tab:
