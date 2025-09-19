@@ -75,7 +75,7 @@ def main():
     )
 
     st.markdown(
-        "<h2 style='text-align:center;'>💰 Finance Intelligence Dashboard</h2>",
+        "<h2 style='text-align:center;'>💶 Finance Intelligence Dashboard</h2>",
         unsafe_allow_html=True,
     )
 
