@@ -9,8 +9,36 @@ from utils import (
     compute_kpis,
     months_sorted,
     describe_cluster,
-    color_dot
+    color_dot,
+    load_data
 )
+
+
+
+def test_load_data_basic():
+    """Test that load_data reads CSV correctly and adds 'Month' column."""
+    csv_content = """Date,Category,Amount
+    2025-01-01,Salary,1000
+    2025-01-15,Groceries,-200"""
+    fake_file = StringIO(csv_content)
+    df = load_data(fake_file)
+    
+    # Check columns
+    assert "Date" in df.columns
+    assert "Category" in df.columns
+    assert "Amount" in df.columns
+    assert "Month" in df.columns
+    
+    # Check types
+    assert pd.api.types.is_datetime64_any_dtype(df["Date"])
+    assert pd.api.types.is_period_dtype(df["Month"])
+    
+    # Check data correctness
+    assert df.shape[0] == 2
+    assert df["Month"].iloc[0] == pd.Timestamp("2025-01-01").to_period("M")
+    assert df["Month"].iloc[1] == pd.Timestamp("2025-01-15").to_period("M")
+
+
 
 def test_load_data_columns():
     """Test that loading CSV data creates a DataFrame with 'Date' as datetime
