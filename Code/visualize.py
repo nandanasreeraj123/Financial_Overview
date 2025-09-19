@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 import numpy as np
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from utils import months_sorted, color_dot, describe_cluster
+import altair as alt
 
 def plot_category_spending(df):
     """
@@ -213,3 +214,61 @@ def spending_clusters(df):
     st.markdown(cluster_summary.to_html(escape=False, index=False), unsafe_allow_html=True)
 
     return monthly
+
+
+def plot_monthly_expenses(df, income_categories=['salary']):
+    st.markdown("<h3><i class='fa-solid fa-calendar'></i> Monthly Expenses vs Expected</h3>", unsafe_allow_html=True)
+
+    # Convert Date & Month
+    df['Date'] = pd.to_datetime(df['Date'])
+    df['Month'] = df['Date'].dt.to_period('M').dt.to_timestamp()
+
+    # Month selector with nice labels
+    month_map = {d.strftime("%b %Y"): d for d in df['Month'].unique()}
+    selected_label = st.selectbox("Select Month", list(month_map.keys()))
+    selected_month = month_map[selected_label]
+
+    # Filter month & exclude income
+    month_df = df[df['Month'] == selected_month]
+    month_df = month_df[~month_df['Category'].str.lower().isin(income_categories)].copy()
+    month_df['Amount'] = month_df['Amount'].abs()
+
+    st.markdown("### Set Expected Budget per Category")
+
+    # Arrange inputs in columns
+    cols = st.columns(4)
+    expected_dict = {}
+    categories = month_df['Category'].unique()
+
+    for i, cat in enumerate(categories):
+        col = cols[i % 4]  # cycle through columns
+        # Using slider instead of number input
+        expected_dict[cat] = col.slider(
+            label=f"{cat} Expected (€)",
+            min_value=0,
+            max_value=5000,   # max value can be adjusted
+            value=500,
+            step=50
+        )
+
+    # Display total expected
+    total_expected = sum(expected_dict.values())
+    st.markdown(f"**Total Expected:** €{total_expected:,.2f}")
+
+    # Bar chart Expected vs Actual
+    chart_df = pd.DataFrame({
+        'Category': categories,
+        'Expected': [expected_dict[c] for c in categories],
+        'Actual': [month_df[month_df['Category']==c]['Amount'].sum() for c in categories]
+    })
+    base = alt.Chart(chart_df).encode(y=alt.Y('Category:N', sort='-x'))
+    expected_bar = base.mark_bar(color='lightgray').encode(x='Expected:Q')
+    actual_bar = base.mark_bar(color='steelblue').encode(x='Actual:Q')
+    st.altair_chart(expected_bar + actual_bar, use_container_width=True)
+
+    # Top 3 Insights
+    category_spending = month_df.groupby('Category')['Amount'].sum().sort_values(ascending=False)
+    top3 = category_spending.head(3)
+    st.markdown("### Top 3 Insights")
+    for i, (cat, amt) in enumerate(top3.items(), start=1):
+        st.markdown(f"**{i}. {cat}: €{amt:,.2f} spent**")
