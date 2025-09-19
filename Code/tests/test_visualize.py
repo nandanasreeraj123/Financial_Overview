@@ -3,10 +3,10 @@ import pandas as pd
 import sys
 import os
 import warnings
-
+import numpy as np
 warnings.filterwarnings("ignore")  
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from visualize import show_anomalies, forecast_expenses, spending_clusters, plot_monthly_expenses
+from visualize import show_anomalies, forecast_expenses, spending_clusters, plot_monthly_expenses, plot_category_spending, plot_monthly_trends
 
 # Fixtures
 @pytest.fixture
@@ -127,3 +127,55 @@ def test_plot_monthly_expenses_empty_input(empty_df):
             pytest.fail(f"Function crashed on empty DataFrame: {e}")
     else:
         plot_monthly_expenses(df)
+
+def test_plot_category_spending_all_income():
+    """Test plot_category_spending with only income rows; should trigger warning."""
+    df = pd.DataFrame(
+        {
+            "Date": pd.to_datetime(["2025-01-01"]),
+            "Category": ["Salary"],
+            "Amount": [1000],
+        }
+    )
+    plot_category_spending(df) 
+
+
+def test_plot_monthly_trends_no_expenses():
+    """Test plot_monthly_trends with no expense rows; should trigger warning."""
+    df = pd.DataFrame(
+        {
+            "Date": pd.to_datetime(["2025-01-01"]),
+            "Month": pd.to_datetime(["2025-01-01"]),
+            "Category": ["Salary"],
+            "Amount": [1000],
+        }
+    )
+    plot_monthly_trends(df)  
+
+
+def test_forecast_expenses_fail_sarimax():
+    """Test forecast_expenses handling of data that triggers SARIMAX exception."""
+    df = pd.DataFrame(
+        {
+            "Date": pd.date_range("2025-01-01", periods=6, freq="MS"),
+            "Category": ["Groceries"] * 6,
+            "Amount": [-100, float("nan"), -100, -100, -100, -100],  
+        }
+    )
+    df["Month"] = df["Date"].dt.to_period("M")
+    forecast_df = forecast_expenses(df)
+    assert forecast_df.empty  
+
+
+def test_spending_clusters_no_expense_rows():
+    """Test spending_clusters when all rows are income; should trigger n_clusters < 1 branch."""
+    df = pd.DataFrame(
+        {
+            "Date": pd.to_datetime(["2025-01-01"]),
+            "Category": ["Salary"],
+            "Amount": [1000],
+        }
+    )
+    df["Month"] = df["Date"].dt.to_period("M")
+    clusters = spending_clusters(df)  
+    assert clusters.empty or "Amount" in clusters.columns
