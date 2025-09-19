@@ -1,14 +1,13 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.ensemble import IsolationForest
 from sklearn.cluster import KMeans
-import numpy as np
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from utils import months_sorted, color_dot, describe_cluster
 import altair as alt
+
 
 def plot_category_spending(df):
     """
@@ -34,7 +33,7 @@ def plot_category_spending(df):
         names="Category",
         hole=0.45,
         title="Spending by Category (Expenses Only)",
-        color_discrete_sequence=px.colors.qualitative.Set3
+        color_discrete_sequence=px.colors.qualitative.Set3,
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -66,7 +65,7 @@ def plot_monthly_trends(df):
         markers=True,
         title="Monthly Spending Trend (Expenses Only)",
         line_shape="spline",
-        color_discrete_sequence=["#FF5733"]  
+        color_discrete_sequence=["#FF5733"],
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -82,8 +81,14 @@ def show_anomalies(df):
     df["Anomaly"] = iso.fit_predict(df[["Amount"]])
     anomalies = df[df["Anomaly"] == -1]
 
-    fig = px.scatter(df, x="Date", y="Amount", color=df["Anomaly"].map({1: "Normal", -1: "Anomaly"}),
-                     title="Expense Anomalies", color_discrete_map={"Normal": "blue", "Anomaly": "red"})
+    fig = px.scatter(
+        df,
+        x="Date",
+        y="Amount",
+        color=df["Anomaly"].map({1: "Normal", -1: "Anomaly"}),
+        title="Expense Anomalies",
+        color_discrete_map={"Normal": "blue", "Anomaly": "red"},
+    )
     st.plotly_chart(fig, use_container_width=True)
 
     st.write("🚨 Anomalous Transactions:")
@@ -113,7 +118,7 @@ def forecast_expenses(df, forecast_months=6):
 
     # Fit ARIMA (SARIMA for monthly seasonality)
     try:
-        model = SARIMAX(monthly, order=(1,1,1), seasonal_order=(1,1,1,12))
+        model = SARIMAX(monthly, order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
         results = model.fit(disp=False)
     except Exception as e:
         st.error(f"Forecasting error: {e}")
@@ -124,28 +129,57 @@ def forecast_expenses(df, forecast_months=6):
     forecast_mean = forecast.predicted_mean
     forecast_ci = forecast.conf_int()
 
-    forecast_df = pd.DataFrame({
-        "Month": forecast_mean.index.strftime("%Y-%m"),
-        "Predicted_Expense": forecast_mean.values,
-        "Lower_CI": forecast_ci.iloc[:, 0].values,
-        "Upper_CI": forecast_ci.iloc[:, 1].values
-    })
+    forecast_df = pd.DataFrame(
+        {
+            "Month": forecast_mean.index.strftime("%Y-%m"),
+            "Predicted_Expense": forecast_mean.values,
+            "Lower_CI": forecast_ci.iloc[:, 0].values,
+            "Upper_CI": forecast_ci.iloc[:, 1].values,
+        }
+    )
 
     # Plot
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=monthly.index.strftime("%Y-%m"), y=monthly.values, name="Actual"))
-    fig.add_trace(go.Scatter(x=forecast_df["Month"], y=forecast_df["Predicted_Expense"],
-                             mode="lines+markers", name="Forecast", line=dict(dash="dot")))
-    fig.add_trace(go.Scatter(x=forecast_df["Month"], y=forecast_df["Upper_CI"],
-                             mode="lines", name="Upper CI", line=dict(width=0), showlegend=False))
-    fig.add_trace(go.Scatter(x=forecast_df["Month"], y=forecast_df["Lower_CI"],
-                             mode="lines", name="Lower CI", line=dict(width=0), fill="tonexty", fillcolor="rgba(0,100,80,0.2)", showlegend=False))
+    fig.add_trace(
+        go.Bar(x=monthly.index.strftime("%Y-%m"), y=monthly.values, name="Actual")
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=forecast_df["Month"],
+            y=forecast_df["Predicted_Expense"],
+            mode="lines+markers",
+            name="Forecast",
+            line=dict(dash="dot"),
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=forecast_df["Month"],
+            y=forecast_df["Upper_CI"],
+            mode="lines",
+            name="Upper CI",
+            line=dict(width=0),
+            showlegend=False,
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=forecast_df["Month"],
+            y=forecast_df["Lower_CI"],
+            mode="lines",
+            name="Lower CI",
+            line=dict(width=0),
+            fill="tonexty",
+            fillcolor="rgba(0,100,80,0.2)",
+            showlegend=False,
+        )
+    )
 
     fig.update_layout(
         title=f"📈 {forecast_months}-Month Expense Forecast",
         xaxis_title="Month",
         yaxis_title="Expense (€)",
-        template="plotly_white"
+        template="plotly_white",
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -159,13 +193,17 @@ def spending_clusters(df):
     if df.empty:
         st.warning("No data to perform clustering.")
         return pd.DataFrame()
-    
+
     # Use only expenses (positive)
     monthly_expenses = df[df["Amount"] < 0].copy()
     monthly_expenses["Amount"] = monthly_expenses["Amount"].abs()
 
     # Aggregate by month
-    monthly = monthly_expenses.groupby(monthly_expenses["Month"])["Amount"].sum().reset_index()
+    monthly = (
+        monthly_expenses.groupby(monthly_expenses["Month"])["Amount"]
+        .sum()
+        .reset_index()
+    )
     monthly["Month"] = monthly["Month"].astype(str)
     monthly["Month_dt"] = pd.to_datetime(monthly["Month"].astype(str) + "-01")
 
@@ -180,7 +218,11 @@ def spending_clusters(df):
     monthly["Cluster"] = kmeans.labels_.astype(str)
 
     # Custom RGB colors
-    cluster_colors = {"0": "rgb(220, 20, 60)", "1": "rgb(34, 139, 34)", "2": "rgb(30, 144, 255)"}
+    cluster_colors = {
+        "0": "rgb(220, 20, 60)",
+        "1": "rgb(34, 139, 34)",
+        "2": "rgb(30, 144, 255)",
+    }
 
     # Scatter plot
     fig = px.scatter(
@@ -189,56 +231,70 @@ def spending_clusters(df):
         y="Amount",
         color="Cluster",
         title="Spending Clusters",
-        color_discrete_map=cluster_colors
+        color_discrete_map=cluster_colors,
     )
     st.plotly_chart(fig, use_container_width=True)
 
     # Cluster explanations with months
-    cluster_summary = monthly.groupby("Cluster").agg({
-        "Amount": "mean",
-        "Month_dt": months_sorted
-    }).reset_index()
+    cluster_summary = (
+        monthly.groupby("Cluster")
+        .agg({"Amount": "mean", "Month_dt": months_sorted})
+        .reset_index()
+    )
 
     q1 = cluster_summary["Amount"].quantile(0.33)
     q2 = cluster_summary["Amount"].quantile(0.66)
 
     # Apply cluster description and color dot
-    cluster_summary["Description"] = cluster_summary["Amount"].apply(lambda x: describe_cluster(x, q1, q2))
-    cluster_summary["Color"] = cluster_summary["Cluster"].apply(lambda x: color_dot(x, cluster_colors))
+    cluster_summary["Description"] = cluster_summary["Amount"].apply(
+        lambda x: describe_cluster(x, q1, q2)
+    )
+    cluster_summary["Color"] = cluster_summary["Cluster"].apply(
+        lambda x: color_dot(x, cluster_colors)
+    )
 
-    cluster_summary = cluster_summary[["Cluster", "Description", "Amount", "Month_dt", "Color"]]
+    cluster_summary = cluster_summary[
+        ["Cluster", "Description", "Amount", "Month_dt", "Color"]
+    ]
     cluster_summary.rename(columns={"Month_dt": "Months"}, inplace=True)
 
     st.subheader("Cluster Explanations (Jan → Dec)")
     st.write("Color column shows the cluster dot color in the scatter plot:")
-    st.markdown(cluster_summary.to_html(escape=False, index=False), unsafe_allow_html=True)
+    st.markdown(
+        cluster_summary.to_html(escape=False, index=False), unsafe_allow_html=True
+    )
 
     return monthly
 
 
-def plot_monthly_expenses(df, income_categories=['salary']):
-    st.markdown("<h3><i class='fa-solid fa-calendar'></i> Monthly Expenses vs Expected</h3>", unsafe_allow_html=True)
+def plot_monthly_expenses(df, income_categories=["salary"]):
+    st.markdown(
+        "<h3><i class='fa-solid fa-calendar'></i> Monthly Expenses vs Expected</h3>",
+        unsafe_allow_html=True,
+    )
 
     # Convert Date & Month
-    df['Date'] = pd.to_datetime(df['Date'])
-    df['Month'] = df['Date'].dt.to_period('M').dt.to_timestamp()
+    df["Date"] = pd.to_datetime(df["Date"])
+    df["Month"] = df["Date"].dt.to_period("M").dt.to_timestamp()
 
     # Month selector with nice labels
-    month_map = {d.strftime("%b %Y"): d for d in df['Month'].unique()}
+    month_map = {d.strftime("%b %Y"): d for d in df["Month"].unique()}
     selected_label = st.selectbox("Select Month", list(month_map.keys()))
     selected_month = month_map[selected_label]
 
     # Filter month & exclude income
-    month_df = df[df['Month'] == selected_month]
-    month_df = month_df[~month_df['Category'].str.lower().isin(income_categories)].copy()
-    month_df['Amount'] = month_df['Amount'].abs()
+    month_df = df[df["Month"] == selected_month]
+    month_df = month_df[
+        ~month_df["Category"].str.lower().isin(income_categories)
+    ].copy()
+    month_df["Amount"] = month_df["Amount"].abs()
 
     st.markdown("### Set Expected Budget per Category")
 
     # Arrange inputs in columns
     cols = st.columns(4)
     expected_dict = {}
-    categories = month_df['Category'].unique()
+    categories = month_df["Category"].unique()
 
     for i, cat in enumerate(categories):
         col = cols[i % 4]  # cycle through columns
@@ -246,9 +302,9 @@ def plot_monthly_expenses(df, income_categories=['salary']):
         expected_dict[cat] = col.slider(
             label=f"{cat} Expected (€)",
             min_value=0,
-            max_value=5000,   # max value can be adjusted
+            max_value=5000,  # max value can be adjusted
             value=500,
-            step=50
+            step=50,
         )
 
     # Display total expected
@@ -256,18 +312,24 @@ def plot_monthly_expenses(df, income_categories=['salary']):
     st.markdown(f"**Total Expected:** €{total_expected:,.2f}")
 
     # Bar chart Expected vs Actual
-    chart_df = pd.DataFrame({
-        'Category': categories,
-        'Expected': [expected_dict[c] for c in categories],
-        'Actual': [month_df[month_df['Category']==c]['Amount'].sum() for c in categories]
-    })
-    base = alt.Chart(chart_df).encode(y=alt.Y('Category:N', sort='-x'))
-    expected_bar = base.mark_bar(color='lightgray').encode(x='Expected:Q')
-    actual_bar = base.mark_bar(color='steelblue').encode(x='Actual:Q')
+    chart_df = pd.DataFrame(
+        {
+            "Category": categories,
+            "Expected": [expected_dict[c] for c in categories],
+            "Actual": [
+                month_df[month_df["Category"] == c]["Amount"].sum() for c in categories
+            ],
+        }
+    )
+    base = alt.Chart(chart_df).encode(y=alt.Y("Category:N", sort="-x"))
+    expected_bar = base.mark_bar(color="lightgray").encode(x="Expected:Q")
+    actual_bar = base.mark_bar(color="steelblue").encode(x="Actual:Q")
     st.altair_chart(expected_bar + actual_bar, use_container_width=True)
 
     # Top 3 Insights
-    category_spending = month_df.groupby('Category')['Amount'].sum().sort_values(ascending=False)
+    category_spending = (
+        month_df.groupby("Category")["Amount"].sum().sort_values(ascending=False)
+    )
     top3 = category_spending.head(3)
     st.markdown("### Top 3 Insights")
     for i, (cat, amt) in enumerate(top3.items(), start=1):
