@@ -134,4 +134,9 @@ To make sure your CSV file loads correctly in the dashboard:
    - ❌ Avoid: `$786.69`, `2,500`  
 4. Positive values = **Income** (e.g., Salary).  
 5. Negative values = **Expenses** (e.g., Rent, Food, Shopping).  
-6. If you have multiple currencies, convert them into a single currency before loading.  
+6. If you have multiple currencies, convert them into a single currency before loading.
+
+## 📋 Quick Start with Default CSV
+
+You can explore the Finance Intelligence Dashboard immediately **without uploading your own CSV** using the **Use default CSV** checkbox on the home page.
+
