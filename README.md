@@ -6,7 +6,7 @@ Interactive Streamlit app to visualize personal finances, detect anomalies, fore
 This project follows a **data → processing → analytics → visualization** pipeline:  
 
 <p align="center">  
-  <img src="Sample_data/assets/pipeline.png" alt="Pipeline" width="80%">  
+  <img src="assets/pipeline.png" alt="Pipeline" width="80%">  
 </p>  
 
 1. **Input** → Upload CSV or use default sample data.  
@@ -29,7 +29,7 @@ Here’s what the dashboard looks like in action, with each tab illustrated:
 
 ### 1. Dashboard Tab
 <p align="center">
-  <img src="Sample_data/assets/dashboard_tab.png" alt="Dashboard Tab Screenshot" width="80%">
+  <img src="assets/dashboard_tab.png" alt="Dashboard Tab Screenshot" width="80%">
 </p>
 - KPI cards (Income, Expenses, Savings, Savings Rate)  
 - Category spending chart  
@@ -39,7 +39,7 @@ Here’s what the dashboard looks like in action, with each tab illustrated:
 
 ### 2. Monthly Expenses Tab
 <p align="center">
-  <img src="Sample_data/assets/monthly_expenses_tab.png" alt="Monthly Expenses Tab Screenshot" width="80%">
+  <img src="assets/monthly_expenses_tab.png" alt="Monthly Expenses Tab Screenshot" width="80%">
 </p>
 - Breakdown of monthly spending by category vs income  
 
@@ -47,7 +47,7 @@ Here’s what the dashboard looks like in action, with each tab illustrated:
 
 ### 3. Anomalies Tab
 <p align="center">
-  <img src="Sample_data/assets/anomalies_tab.png" alt="Anomalies Tab Screenshot" width="80%">
+  <img src="assets/anomalies_tab.png" alt="Anomalies Tab Screenshot" width="80%">
 </p>
 - Highlights unusual transactions or spending patterns  
 
@@ -55,7 +55,7 @@ Here’s what the dashboard looks like in action, with each tab illustrated:
 
 ### 4. Forecasting Tab
 <p align="center">
-  <img src="Sample_data/assets/forecast_tab.png" alt="Forecast Tab Screenshot" width="80%">
+  <img src="assets/forecast_tab.png" alt="Forecast Tab Screenshot" width="80%">
 </p>
 - Predicts future expenses  
 - Shows forecast trends  
@@ -64,7 +64,7 @@ Here’s what the dashboard looks like in action, with each tab illustrated:
 
 ### 5. Insights Tab
 <p align="center">
-  <img src="Sample_data/assets/insights_tab.png" alt="Insights Tab Screenshot" width="80%">
+  <img src="assets/insights_tab.png" alt="Insights Tab Screenshot" width="80%">
 </p>
 - Cluster-based analysis of spending behavior  
 - Labels months as Low / Medium / High spending  
@@ -73,7 +73,7 @@ Here’s what the dashboard looks like in action, with each tab illustrated:
 
 ### 6. Raw Data Tab
 <p align="center">
-  <img src="Sample_data/assets/raw_data_tab.png" alt="Raw Data Tab Screenshot" width="80%">
+  <img src="assets/raw_data_tab.png" alt="Raw Data Tab Screenshot" width="80%">
 </p>
 - Interactive table view of all uploaded transactions  
 
@@ -101,7 +101,7 @@ streamlit run app.py
 ```
 ## 📂 Sample Data  
 
-A sample dataset (`Sample_Data/sample_data.csv`) is included so you can explore the dashboard without using your personal bank data.  
+A sample dataset (`Sample_data/sample_data.csv`) is included so you can explore the dashboard without using your personal bank data.  
 
 ### 📋 Schema  
 
