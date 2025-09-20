@@ -5,11 +5,6 @@
 
 Interactive Streamlit app to visualize personal finances, detect anomalies, forecast expenses, and gain insights.
 
-## 🎬 Demo Video
-
-Watch a quick demo of the Finance Intelligence Dashboard in action:  
-
-[▶️ Watch Demo Video](https://drive.google.com/file/d/1sx0gcjufydDJLA7AJP4CgPuwtxy92ci0/view?usp=sharing)
 
 This project follows a **data → processing → analytics → visualization** pipeline:  
 
@@ -30,6 +25,13 @@ This project follows a **data → processing → analytics → visualization** p
 6. **Output** → Personalized financial intelligence insights.  
 
 ---
+
+## 🎬 Demo Video
+
+Watch a quick demo of the Finance Intelligence Dashboard in action:  
+
+[▶️ Watch Demo Video](https://drive.google.com/file/d/1sx0gcjufydDJLA7AJP4CgPuwtxy92ci0/view?usp=sharing)
+
 
 ## 📊 Finance Intelligence Dashboard  
 
