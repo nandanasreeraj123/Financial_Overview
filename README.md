@@ -1,4 +1,7 @@
 # Finance Intelligence Dashboard
+<p align="center">  
+  <img src="assets/dash" alt="Home" width="80%">  
+</p>  
 
 Interactive Streamlit app to visualize personal finances, detect anomalies, forecast expenses, and gain insights.
 
