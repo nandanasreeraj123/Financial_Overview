@@ -93,7 +93,7 @@ pip install -r requirements.txt
 Clone the repository and install the required dependencies:  
 
 ```bash
-git clone https://github.com/yourusername/finance-dashboard.git
+git clone https://github.com/nandanasreeraj123/finance-dashboard.git
 cd finance-dashboard
 
 # install dependencies
