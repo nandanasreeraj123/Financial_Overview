@@ -7,7 +7,6 @@
 import pytest
 import pandas as pd
 from io import StringIO
-from typing import Generator
 import sys
 import os
 
@@ -51,7 +50,9 @@ def test_load_data_columns() -> None:
 
     Uses a simple CSV content to check column creation and data types.
     """
-    csv_content = "Date,Category,Amount\n2025-01-01,Salary,1000\n2025-01-15,Groceries,-200"
+    csv_content = (
+        "Date,Category,Amount\n2025-01-01,Salary,1000\n2025-01-15,Groceries,-200"
+    )
     fake_file = StringIO(csv_content)
     df = pd.read_csv(fake_file, parse_dates=["Date"])
     df["Month"] = df["Date"].dt.to_period("M")

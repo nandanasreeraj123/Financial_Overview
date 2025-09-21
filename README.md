@@ -67,6 +67,7 @@ This project follows a **data → processing → analytics → visualization** p
 6. **Output** → Personalized financial intelligence insights.  
 
 
+> ⚙️ For more technical details, see the `technical_documentation.md` file in the `Docs` folder.
 
 ### 1. Dashboard Tab
 <p align="center">
