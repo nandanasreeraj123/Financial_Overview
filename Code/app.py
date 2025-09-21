@@ -1,3 +1,10 @@
+# -----------------------------------------------------------------------------
+# Finance Intelligence Dashboard
+# Copyright (c) 2025 Nandana Sreeraj
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
+# -----------------------------------------------------------------------------
+
+
 import streamlit as st
 from utils import load_data, compute_kpis
 from visualize import (
@@ -15,7 +22,6 @@ import base64
 def main():
     st.set_page_config(page_title="Finance Intelligence Dashboard", layout="wide")
 
-    # ---------------- Background Video ----------------
     video_path = "../Sample_Data/bg.mp4"
     if os.path.exists(video_path):
         with open(video_path, "rb") as f:
@@ -52,7 +58,6 @@ def main():
             unsafe_allow_html=True,
         )
 
-    # ---------------- Font Awesome + CSS ----------------
     st.markdown(
         """
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -79,7 +84,7 @@ def main():
         unsafe_allow_html=True,
     )
 
-    # ---------------- CSV Upload / Default ----------------
+    # CSV Upload and Default CSV Option
     uploaded_file = st.file_uploader("Upload your CSV", type=["csv"])
     use_default = st.checkbox("Use default CSV")
 
@@ -104,7 +109,6 @@ def main():
     if "df" in st.session_state and not st.session_state.df.empty:
         df = st.session_state.df
 
-        # Sidebar filters
         st.sidebar.markdown(
             '<h3><i class="fa-solid fa-gear"></i> Filters</h3>', unsafe_allow_html=True
         )
@@ -135,7 +139,7 @@ def main():
             ]
         )
 
-        # ---------------- Dashboard Tab ----------------
+        # Dashboard Tab
         with dashboard_tab:
             st.markdown(
                 '<h3><i class="fa-solid fa-chart-pie"></i> Financial Overview</h3>',
@@ -190,11 +194,11 @@ def main():
             with col2:
                 plot_monthly_trends(df_filtered)
 
-        # ---------------- Monthly Expenses Tab ----------------
+        # Monthly Expenses Tab
         with monthly_tab:
             plot_monthly_expenses(df_filtered, income_categories=income_categories)
 
-        # ---------------- Anomalies Tab ----------------
+        # Anomalies Tab
         with anomaly_tab:
             st.markdown(
                 '<h3><i class="fa-solid fa-triangle-exclamation"></i> Anomaly Detection</h3>',
@@ -202,7 +206,7 @@ def main():
             )
             show_anomalies(df_filtered)
 
-        # ---------------- Forecast Tab ----------------
+        # Forecast Tab
         with forecast_tab:
             st.markdown(
                 '<h3><i class="fa-solid fa-chart-line"></i> Forecasting</h3>',
@@ -210,7 +214,7 @@ def main():
             )
             forecast_expenses(df_filtered)
 
-        # ---------------- Insights Tab ----------------
+        # Insights Tab
         with insights_tab:
             st.markdown(
                 '<h3><i class="fa-solid fa-robot"></i> Spending Insights</h3>',
@@ -218,7 +222,7 @@ def main():
             )
             spending_clusters(df_filtered)
 
-        # ---------------- Raw Data Tab ----------------
+        # Raw Data Tab
         with rawdata_tab:
             st.markdown(
                 '<h3><i class="fa-solid fa-folder-open"></i> Raw Data</h3>',
@@ -226,7 +230,7 @@ def main():
             )
             st.dataframe(df_filtered)
 
-        # ---------------- Video Credits ----------------
+        # Video Credits  - >  Attributes the video from vecteezy
         st.markdown(
             (
                 "<div style='text-align:center; font-size:12px; color:gray; margin-top:20px;'>"

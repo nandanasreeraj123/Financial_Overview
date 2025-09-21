@@ -1,6 +1,13 @@
+# -----------------------------------------------------------------------------
+# Finance Intelligence Dashboard - Tests
+# Copyright (c) 2025 Nandana Sreeraj
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
+# -----------------------------------------------------------------------------
+
 import pytest
 import pandas as pd
 from io import StringIO
+from typing import Generator
 import sys
 import os
 
@@ -15,36 +22,36 @@ from utils import (
 )
 
 
-def test_load_data_basic():
-    """Test that load_data reads CSV correctly and adds 'Month' column."""
+def test_load_data_basic() -> None:
+    """
+    Verify that load_data reads CSV correctly and adds the 'Month' column.
+
+    Checks that columns exist, types are correct, and data values match expected.
+    """
     csv_content = """Date,Category,Amount
-    2025-01-01,Salary,1000
-    2025-01-15,Groceries,-200"""
+2025-01-01,Salary,1000
+2025-01-15,Groceries,-200"""
     fake_file = StringIO(csv_content)
     df = load_data(fake_file)
 
-    # Check columns
     assert "Date" in df.columns
     assert "Category" in df.columns
     assert "Amount" in df.columns
     assert "Month" in df.columns
-
-    # Check types
     assert pd.api.types.is_datetime64_any_dtype(df["Date"])
     assert pd.api.types.is_period_dtype(df["Month"])
-
-    # Check data correctness
     assert df.shape[0] == 2
     assert df["Month"].iloc[0] == pd.Timestamp("2025-01-01").to_period("M")
     assert df["Month"].iloc[1] == pd.Timestamp("2025-01-15").to_period("M")
 
 
-def test_load_data_columns():
-    """Test that loading CSV data creates a DataFrame with 'Date' as datetime
-    and adds a 'Month' column correctly."""
-    csv_content = (
-        "Date,Category,Amount\n2025-01-01,Salary,1000\n2025-01-15,Groceries,-200"
-    )
+def test_load_data_columns() -> None:
+    """
+    Verify that load_data creates 'Date' as datetime and adds a 'Month' column.
+
+    Uses a simple CSV content to check column creation and data types.
+    """
+    csv_content = "Date,Category,Amount\n2025-01-01,Salary,1000\n2025-01-15,Groceries,-200"
     fake_file = StringIO(csv_content)
     df = pd.read_csv(fake_file, parse_dates=["Date"])
     df["Month"] = df["Date"].dt.to_period("M")
@@ -54,9 +61,14 @@ def test_load_data_columns():
 
 
 @pytest.fixture
-def sample_df():
-    """Fixture with multiple rows for testing KPI computation and preprocessing."""
-    df = pd.DataFrame(
+def sample_df() -> pd.DataFrame:
+    """
+    Provide a sample DataFrame with multiple rows for testing KPI computation.
+
+    Returns:
+        pd.DataFrame: Sample transaction data covering income and expenses.
+    """
+    return pd.DataFrame(
         {
             "Date": pd.to_datetime(
                 ["2025-01-01", "2025-01-15", "2025-02-01", "2025-02-15"]
@@ -65,17 +77,23 @@ def sample_df():
             "Amount": [1000, -200, 2000, -300],
         }
     )
-    return df
 
 
 @pytest.fixture
-def empty_df():
-    """Fixture representing an empty DataFrame for edge case testing."""
+def empty_df() -> pd.DataFrame:
+    """
+    Provide an empty DataFrame for edge case testing.
+
+    Returns:
+        pd.DataFrame: Empty DataFrame with expected columns.
+    """
     return pd.DataFrame(columns=["Date", "Category", "Amount"])
 
 
-def test_preprocess_data_adds_month_column():
-    """Test that preprocess_data converts 'Date' to datetime and adds 'Month' column."""
+def test_preprocess_data_adds_month_column() -> None:
+    """
+    Verify that preprocess_data converts 'Date' to datetime and adds 'Month' column.
+    """
     df = pd.DataFrame({"Date": ["2025-03-01"]})
     df = preprocess_data(df)
     assert "Month" in df.columns
@@ -83,17 +101,21 @@ def test_preprocess_data_adds_month_column():
     assert df["Month"].iloc[0].month == 3
 
 
-def test_compute_kpis_multiple_months(sample_df):
-    """Test KPI computation over multiple months with both income and expenses."""
+def test_compute_kpis_multiple_months(sample_df: pd.DataFrame) -> None:
+    """
+    Compute KPIs over multiple months and verify income, expenses, savings, and rate.
+    """
     income, expense, savings, rate = compute_kpis(sample_df)
-    assert income == pytest.approx(1500)  # 3000 total salary / 2 months
-    assert expense == pytest.approx(250)  # 500 total expenses / 2 months
+    assert income == pytest.approx(1500)
+    assert expense == pytest.approx(250)
     assert savings == pytest.approx(1250)
     assert rate == pytest.approx(1250 / 1500 * 100)
 
 
-def test_compute_kpis_no_salary():
-    """Test KPI computation when there is no salary; income should be 0."""
+def test_compute_kpis_no_salary() -> None:
+    """
+    Verify KPI computation when no salary exists; income should be 0.
+    """
     df = pd.DataFrame(
         {
             "Date": pd.to_datetime(["2025-01-01", "2025-01-15"]),
@@ -108,32 +130,42 @@ def test_compute_kpis_no_salary():
     assert rate == 0
 
 
-def test_compute_kpis_empty(empty_df):
-    """Test KPI computation on an empty DataFrame returns all zeros."""
+def test_compute_kpis_empty(empty_df: pd.DataFrame) -> None:
+    """
+    Verify that compute_kpis returns zeros for an empty DataFrame.
+    """
     assert compute_kpis(empty_df) == (0, 0, 0, 0)
 
 
-def test_months_sorted_duplicates():
-    """Test that months_sorted correctly sorts months chronologically and formats as abbreviations."""
+def test_months_sorted_duplicates() -> None:
+    """
+    Verify months_sorted returns correctly sorted month abbreviations with duplicates.
+    """
     s = pd.Series(pd.to_datetime(["2025-01-01", "2025-01-15", "2025-02-01"]))
     result = months_sorted(s)
     assert result == "Jan, Jan, Feb"
 
 
-def test_months_sorted_empty():
-    """Test that months_sorted returns an empty string for empty input."""
+def test_months_sorted_empty() -> None:
+    """
+    Verify months_sorted returns an empty string for empty input Series.
+    """
     s = pd.Series(dtype="datetime64[ns]")
     assert months_sorted(s) == ""
 
 
-def test_describe_cluster_boundaries():
-    """Test describe_cluster returns correct descriptions based on average value boundaries."""
+def test_describe_cluster_boundaries() -> None:
+    """
+    Verify describe_cluster returns correct labels for given thresholds.
+    """
     assert describe_cluster(100, 100, 200) == "Medium spending month"
     assert describe_cluster(200, 100, 200) == "High spending month"
 
 
-def test_color_dot_known_unknown():
-    """Test color_dot returns the correct HTML dot color for known and unknown clusters."""
+def test_color_dot_known_unknown() -> None:
+    """
+    Verify color_dot returns correct HTML dot color for known and unknown clusters.
+    """
     colors = {"Low": "green", "High": "red"}
     assert "green" in color_dot("Low", colors)
     assert "gray" in color_dot("Medium", colors)
