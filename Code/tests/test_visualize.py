@@ -9,7 +9,6 @@ import pandas as pd
 import sys
 import os
 import warnings
-from typing import Generator
 
 warnings.filterwarnings("ignore")
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -110,7 +109,9 @@ def empty_df() -> pd.DataFrame:
 
 
 # Test functions
-def test_show_anomalies_returns_dataframe(expense_df: pd.DataFrame, empty_df: pd.DataFrame) -> None:
+def test_show_anomalies_returns_dataframe(
+    expense_df: pd.DataFrame, empty_df: pd.DataFrame
+) -> None:
     """
     Verify that show_anomalies returns a DataFrame with an 'Anomaly' column for normal data,
     and returns an empty DataFrame for empty input.
