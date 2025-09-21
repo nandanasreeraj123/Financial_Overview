@@ -182,6 +182,16 @@ To make sure your CSV file loads correctly in the dashboard:
 
 You can explore the Finance Intelligence Dashboard immediately **without uploading your own CSV** using the **Use default CSV** checkbox on the home page.
 
+### 📋 Test Coverage
+
+All core modules and visualization functions are covered by automated tests using **pytest**.  
+Current test coverage is more than **90%**, ensuring the reliability and correctness of financial computations and dashboard visualizations.
+
+```bash
+# Run tests with coverage
+pytest tests/ --cov=finance_dashboard --cov-report=term-missing
+```
+
 ## Contributing
 
 Contributions are welcome! Please follow these steps:
