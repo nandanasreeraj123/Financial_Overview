@@ -100,8 +100,8 @@ pip install -r requirements.txt
 Clone the repository and install the required dependencies:  
 
 ```bash
-git clone https://github.com/nandanasreeraj123/finance-dashboard.git
-cd finance-dashboard
+git clone https://github.com/nandanasreeraj123/Financial_Overview.git
+cd Financial_Overview/Code
 
 # install dependencies
 pip install -r requirements.txt
@@ -111,7 +111,7 @@ streamlit run app.py
 ```
 ## 📂 Sample Data  
 
-A sample dataset (`Sample_data/sample_data.csv`) is included so you can explore the dashboard without using your personal bank data.  
+A sample dataset (`Sample_data/default_transactions.csv`) is included so you can explore the dashboard without using your personal bank data.  
 
 ### 📋 Schema  
 
@@ -149,4 +149,7 @@ To make sure your CSV file loads correctly in the dashboard:
 ## 📋 Quick Start with Default CSV
 
 You can explore the Finance Intelligence Dashboard immediately **without uploading your own CSV** using the **Use default CSV** checkbox on the home page.
+
+## License and Contributting
+This project is licensed under the [MIT License](LICENSE) © 2025 Nandana Sreeraj.
 
