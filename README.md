@@ -24,7 +24,7 @@ Interactive Streamlit app to visualize personal finances, detect anomalies, fore
   - [Example](#example)
 - [CSV Preparation Checklist](#csv-preparation-checklist)
 - [Quick Start with Default CSV](#quick-start-with-default-csv)
-- [Contributing](#-contributing)
+- [Contributing](#contributing)
 - [License](#license)
 
 ---
