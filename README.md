@@ -94,7 +94,7 @@ Clone the repository and install the required dependencies:
 
 ```bash
 git clone https://github.com/nandanasreeraj123/Financial_Overview.git
-cd Financial_Overview
+cd Financial_Overview/Code
 
 # install dependencies
 pip install -r requirements.txt
